@@ -15,7 +15,7 @@ def main():
     ])
 
     model = LanderCNN()
-    model.load_state_dict(torch.load('281213-model.pt'))
+    model.load_state_dict(torch.load('models/281241-model.pt'))
     
     image_names = [f'data/test/{i}.tiff' for i in range(3)]
     for name in image_names: 
@@ -30,7 +30,7 @@ def classify(model, img, transform):
     '''
     model.eval()
 
-    sub_pix = 125
+    sub_pix = 250
     width, height = img.size
 
     # Number of strides 
@@ -70,9 +70,9 @@ def classify(model, img, transform):
         for d_ind, down in enumerate(down_bounds): 
             # This indexing needs to change for multi channel images
             logit = (model.forward(img[0][0][down[0]:down[1],left[0]:left[1]].
-                view(1, 1, img.shape[0], img.shape[1])))
+                view(1, 1, sub_pix, sub_pix)))
             model_label = 0
-            for neuron in torch.sigmoid(log[0]):
+            for neuron in torch.sigmoid(logit[0]):
                 if neuron > 0.5: 
                     model_label += 1
                 else: 
@@ -80,8 +80,8 @@ def classify(model, img, transform):
             labels[d_ind][l_ind] = model_label 
 
     # Visual display 
-    cmap = colors.ListedColormap(['r', 'xkcd:orange', 'y', 'xkcd:aqua', 
-        'xkcd:darkgreen'])
+    cmap = colors.ListedColormap(['xkcd:maroon', 'xkcd:orangered', 'y', 
+        'xkcd:aqua', 'xkcd:darkgreen'])
     trans = transforms.ToPILImage()        
     img = trans(img[0])
     extent = (0, img.size[0], 0, img.size[1])
