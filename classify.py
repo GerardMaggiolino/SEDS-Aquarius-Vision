@@ -1,22 +1,31 @@
 import torch
+import time
 import numpy as np
 import matplotlib.pyplot as plt
-from cnn import LanderCNN
-import matplotlib.pyplot as plt
+import cnn_v1 
+import cnn_v2
 from torchvision import transforms 
 from matplotlib import colors
 from PIL import Image
+from sys import argv as args
 
 
 def main(): 
     transform = transforms.Compose([
         transforms.Grayscale(num_output_channels=1),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5065390467643738], 
+        std=[0.04863845556974411])
     ])
 
-    model = LanderCNN()
-    model.load_state_dict(torch.load('models/281241-model.pt'))
-    
+    # Load model 
+    try: 
+        model = cnn_v1.LanderCNN()
+        model.load_state_dict(torch.load(f'models/{args[1]}'))
+        model.eval()
+    except: 
+        print('Failed to load model. Specify name as first argument.')
+        exit()
     image_names = [f'data/test/{i}.tiff' for i in range(3)]
     for name in image_names: 
         classify(model, Image.open(name), transform)
@@ -28,8 +37,7 @@ def classify(model, img, transform):
 
     Only works with single channel images.
     '''
-    model.eval()
-
+    start = time.time()
     sub_pix = 250
     width, height = img.size
 
@@ -63,6 +71,7 @@ def classify(model, img, transform):
     # Get image prepped for forward pass and labels
     labels = np.zeros((left_strides, down_strides))
 
+    # Transform takes 0.1 seconds 
     img = transform(img)
     img = img.view(-1, *img.shape)
 
@@ -78,12 +87,16 @@ def classify(model, img, transform):
                 else: 
                     break
             labels[d_ind][l_ind] = model_label 
+    
+    print(f'{round((time.time() - start), 5)} wall time in seconds.') 
 
     # Visual display 
     cmap = colors.ListedColormap(['xkcd:maroon', 'xkcd:orangered', 'y', 
         'xkcd:aqua', 'xkcd:darkgreen'])
     trans = transforms.ToPILImage()        
-    img = trans(img[0])
+    mean = 0.5065390467643738
+    std = 0.04863845556974411
+    img = trans((img[0] * std) + mean)
     extent = (0, img.size[0], 0, img.size[1])
     fig = plt.figure(frameon=False)        
     plt.imshow(img, extent=extent)
