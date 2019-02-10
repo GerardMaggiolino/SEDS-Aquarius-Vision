@@ -11,6 +11,8 @@ class LanderCNN(nn.Module):
 
     Expected input of batches of 1x250x250 image. Output for ordinal
     classification, multi-dimension sigmoid output. 
+
+    Filters of 5, 3, 3, ..., 7 Avg pool. 
     '''
 
     def __init__(self): 
@@ -23,20 +25,20 @@ class LanderCNN(nn.Module):
         
         # Define conv layers and register under ModuleList
         self.conv_layers = nn.ModuleList([
-            # First normal conv layer, 251 -> 124
+            # First normal conv layer 251 -> 124
             pad,
             nn.Conv2d(1, 8, 5, stride=2, bias=False),
             nn.BatchNorm2d(8),
             act,
-            # First depthwise separable convolution, 125 -> 62 
-            pad, 
+            # First depthwise separable convolution 125 -> 62
+            pad,
             nn.Conv2d(8, 8, 3, stride=2, bias=False, groups=8),
             nn.BatchNorm2d(8),
             act,
             nn.Conv2d(8, 16, 1, bias=False),
             nn.BatchNorm2d(16),
             act,
-            # Second depthwise separable convolution, 63 -> 31 
+            # Second depthwise separable convolution 63 -> 31
             pad, 
             nn.Conv2d(16, 16, 3, stride=2, bias=False, groups=16),
             nn.BatchNorm2d(16),
@@ -51,7 +53,7 @@ class LanderCNN(nn.Module):
             nn.Conv2d(32, 64, 1, bias=False),
             nn.BatchNorm2d(64),
             act, 
-            # Fourth depthwise separable convolution, 15 -> 7, no pad
+            # Fourth depthwise separable convolution, 15 -> 7,
             nn.Conv2d(64, 64, 3, stride=2, bias=False, groups=64), 
             nn.BatchNorm2d(64),
             act, 
@@ -65,14 +67,12 @@ class LanderCNN(nn.Module):
         self.fc1 = nn.Linear(128, 4)
         self.activation = nn.Sigmoid()
         
-        self.conv_ind = [1, 5, 8, 12, 15, 18, 21, 24, 27]
-        self.bn_ind = [2, 6, 9, 13, 16, 19, 22, 25, 28]
-
-        # Weight initializations
-        for ind in self.conv_ind: 
-            nn.init.xavier_normal_(self.conv_layers[ind].weight)
-        for ind in self.bn_ind: 
-            self.conv_layers[ind].weight.data.fill_(1)
+        # Weight initialization
+        for layer in self.conv_layers:
+            if isinstance(layer, nn.Conv2d):
+                nn.init.xavier_normal_(layer.weight)
+            if isinstance(layer, nn.BatchNorm2d):
+                layer.weight.data.fill_(1)
         nn.init.xavier_normal_(self.fc1.weight)
 
 
