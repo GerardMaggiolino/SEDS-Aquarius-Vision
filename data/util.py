@@ -7,7 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 from os import rename
-
+from shutil import copyfile
+from shutil import copy2
+from torchvision import transforms
 Image.MAX_IMAGE_PIXELS = None
 
 
@@ -17,7 +19,39 @@ def main():
     # extract_portions('raw/raw_3.tiff', 250, 'regions/raw_3', 20)
     # extract_portions('raw/raw_5.tiff', 250, 'regions/raw_5', 35)   
 
-    partition_images(250)
+    # partition_images(250)
+    greyscale_transform()
+
+def greyscale_transform(): 
+    num = 0
+    while True: 
+        try: 
+            img = Image.open(f'labelled/original/{num}.tiff').convert('L')
+            img.save(f'labelled/processed/{num}.tiff')
+            num += 1
+        except: 
+            break
+
+def change_to_csv(): 
+    from_dir = 'labelled/safe'
+    to_dir = 'labelled/original'
+    csv = 'labelled/labels.csv'
+    dirs = [1, 2, 3, 4, 5]
+    put_ind = 0
+    take_ind = 0
+    with open(csv, 'a') as lab: 
+        for d in dirs: 
+            while True:
+                try: 
+                    pic_name = f'{from_dir}_{d}/{take_ind}.tiff'
+                    copyfile(pic_name, f'{to_dir}/{put_ind}.tiff')
+                    lab.write(f'{put_ind}.tiff,{d}\n')
+                    take_ind += 1
+                    put_ind += 1
+                except FileNotFoundError: 
+                    take_ind = 0
+                    break
+        
 
 
 def partition_images(pixels): 

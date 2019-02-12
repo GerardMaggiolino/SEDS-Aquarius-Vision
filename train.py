@@ -23,20 +23,21 @@ def train():
     Runs entire training procedure from start. Saves model.
     '''
     # Hyperparam
-    alpha = 0.001
+    alpha = 0.005
 
     epoch = 50
-    batch = 16
+    batch = 280
     early_stop_ep = 8
     split = [0.7, 0.1, 0.2]
     seed = None
     transform = transforms.Compose([
-        transforms.Grayscale(num_output_channels=1),
         transforms.ToTensor()
     ])
 
     # Data
     train_set, val_set, test_set = create_loaders(split, transform, batch, seed)
+
+    '''
     mean, std = find_mean_std(train_set)
     # Change dataset transform to z-score dynamically
     print(f'Normalizing with mean: {mean}, std: {std}')
@@ -46,6 +47,7 @@ def train():
         transforms.Normalize(mean=[mean], std=[std])
     ])
     train_set.dataset.transform = transform
+    '''
 
     # Model 
     model = cnn_v1.LanderCNN()
@@ -121,7 +123,6 @@ def train():
     # Save model information 
     with open(info_file_name, 'a') as f: 
         f.write(model_save_name)
-        f.write(f'Norm: Mean {mean} Std: {std}\n')
         f.write(f'\nC: {correct}\nT: {total}\n')
         f.write(f'{cat_acc}\n')
         f.write(f'{round(sum(correct) / sum(total) * 100, 3)}\n\n')

@@ -14,18 +14,21 @@ def main():
     transform = transforms.Compose([
         transforms.Grayscale(num_output_channels=1),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5065390467643738], 
-        std=[0.04863845556974411])
     ])
 
     # Load model 
-    try: 
+    if len(args) == 3: 
+        model = cnn_v1.LanderCNN() if args[2] == 'v1' else cnn_v2.LanderCNN()
+    else: 
         model = cnn_v1.LanderCNN()
+    try: 
         model.load_state_dict(torch.load(f'models/{args[1]}'))
         model.eval()
     except: 
-        print('Failed to load model. Specify name as first argument.')
+        print('Failed to load model. Model name is first arg, model type is '
+            'second arg.')
         exit()
+
     image_names = [f'data/test/{i}.tiff' for i in range(3)]
     for name in image_names: 
         classify(model, Image.open(name), transform)
@@ -94,9 +97,7 @@ def classify(model, img, transform):
     cmap = colors.ListedColormap(['xkcd:maroon', 'xkcd:orangered', 'y', 
         'xkcd:aqua', 'xkcd:darkgreen'])
     trans = transforms.ToPILImage()        
-    mean = 0.5065390467643738
-    std = 0.04863845556974411
-    img = trans((img[0] * std) + mean)
+    img = trans(img[0])
     extent = (0, img.size[0], 0, img.size[1])
     fig = plt.figure(frameon=False)        
     plt.imshow(img, extent=extent)
